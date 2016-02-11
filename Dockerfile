@@ -8,7 +8,7 @@ RUN apk --no-cache add wget build-base linux-headers \
       && cd /tmp/src \
       && echo "e56b4b7e033ae8dbf311f9191cf6fdf3ae974d1c ${REDIS_VERSION}.tar.gz" > ${REDIS_VERSION}.tar.gz.sha1 \
       && wget http://download.redis.io/releases/${REDIS_VERSION}.tar.gz \
-      && sha1sum —check ${REDIS_VERSION}.tar.gz.sha1 \
+      && sha1sum -c ${REDIS_VERSION}.tar.gz.sha1 \
       && tar -zxf ${REDIS_VERSION}.tar.gz \
       && cd /tmp/src/${REDIS_VERSION} \
       && make \
