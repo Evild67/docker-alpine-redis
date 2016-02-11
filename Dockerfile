@@ -1,30 +1,50 @@
 FROM evild/alpine-base:1.0.0
 MAINTAINER Dominique HAAS <contact@dominique-haas.fr>
 
-ENV REDIS_VERSION redis-3.0.7
+# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
+RUN addgroup -S redis && adduser -S -G redis redis
 
-RUN apk --no-cache add curl build-base linux-headers \
-      && mkdir -p /tmp/src \
-      && cd /tmp/src \
-      && echo "e56b4b7e033ae8dbf311f9191cf6fdf3ae974d1c  ${REDIS_VERSION}.tar.gz" > ${REDIS_VERSION}.tar.gz.sha1 \
-      && curl -O http://download.redis.io/releases/${REDIS_VERSION}.tar.gz \
-      && sha1sum -c ${REDIS_VERSION}.tar.gz.sha1 \
-      && tar -zxf ${REDIS_VERSION}.tar.gz \
-      && cd /tmp/src/${REDIS_VERSION} \
-      && make \
-      && make install \
-      && rm -rf /tmp/src \
-      && mkdir -p /var/lib/redis \
-      && mkdir -p /var/log/redis \
-      && adduser -S -h /var/lib/redis redis \
-      && mkdir /data \
-      && chown redis /var/lib/redis \
-      && chown redis /var/log/redis \
-      && chown -R redis /data \
-      && apk del wget build-base linux-headers \
+ENV GOSU_GPG_KEY B42F6819007F00F88E364FD4036A9C25BF357DD4
+ENV GOSU_VERSION 1.7
 
-ADD root /
+# grab gosu for easy step-down from root
+RUN apk add --no-cache --virtual .gosu-deps \
+		dpkg \
+		gnupg \
+		openssl \
+	&& gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+	&& wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" \
+	&& wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" \
+	&& gpg --verify /usr/local/bin/gosu.asc \
+	&& rm /usr/local/bin/gosu.asc \
+	&& chmod +x /usr/local/bin/gosu \
+	&& rm -r ~/.gnupg \
+	&& apk del .gosu-deps
 
-VOLUME ["/data"]
+ENV REDIS_VERSION 3.0.7
+ENV REDIS_DOWNLOAD_URL http://download.redis.io/releases/redis-3.0.7.tar.gz
+ENV REDIS_DOWNLOAD_SHA1 e56b4b7e033ae8dbf311f9191cf6fdf3ae974d1c
+
+# for redis-sentinel see: http://redis.io/topics/sentinel
+RUN set -x \
+	&& apk add --no-cache --virtual .build-deps \
+		gcc \
+		linux-headers \
+		make \
+		musl-dev \
+	&& wget "$REDIS_DOWNLOAD_URL" -O redis.tar.gz \
+	&& echo "$REDIS_DOWNLOAD_SHA1 *redis.tar.gz" | sha1sum -c - \
+	&& mkdir -p /usr/src \
+	&& tar -xzf redis.tar.gz -C /usr/src \
+	&& mv "/usr/src/redis-$REDIS_VERSION" /usr/src/redis \
+	&& rm redis.tar.gz \
+	&& make -C /usr/src/redis \
+	&& make -C /usr/src/redis install \
+	&& rm -r /usr/src/redis \
+	&& apk del .build-deps
+
+RUN mkdir /data && chown redis:redis /data
+VOLUME /data
+WORKDIR /data
 
 EXPOSE 6379
