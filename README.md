@@ -24,11 +24,11 @@ nginx:
   #  - /your/path/to/redis.conf:/etc/redis-local.conf:ro
 ```
 
-## Custom Nginx configuration
+## Custom Redis configuration
 
 You can overwrite redis configuration:
 
-Create your own nginx.conf. Make sure your nginx.conf file has a volume to ```/etc/redis-local.conf```
+Create your own redis.conf. Make sure your redis.conf file has a volume to ```/etc/redis-local.conf```
 
-```docker run -v /your/path/to/nginx.conf:/etc/redis-local.conf:ro --name redis evild/alpine-redis```
+```docker run -v /your/path/to/redis.conf:/etc/redis-local.conf:ro --name redis evild/alpine-redis```
 
