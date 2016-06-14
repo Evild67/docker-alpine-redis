@@ -3,9 +3,9 @@
 set -e
 
 
-docker build -t evild/alpine-mailtrain:latest .
-docker inspect evild/alpine-mailtrain:latest
+docker build -t evild/alpine-redis:latest .
+docker inspect evild/alpine-redis:latest
 
 
 docker login -u $DOCKERHUB_LOGIN -p $DOCKERHUB_PASSWORD
-docker push evild/alpine-mailtrain:latest
+docker push evild/alpine-redis:latest
