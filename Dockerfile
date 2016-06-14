@@ -1,12 +1,11 @@
-FROM evild/alpine-base:1.0.0
+FROM evild/alpine-base:3.0.0
 MAINTAINER Dominique HAAS <contact@dominique-haas.fr>
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN addgroup -S redis && adduser -S -G redis redis
 
-ENV REDIS_VERSION 3.0.7
-ENV REDIS_DOWNLOAD_URL http://download.redis.io/releases/redis-3.0.7.tar.gz
-ENV REDIS_DOWNLOAD_SHA1 e56b4b7e033ae8dbf311f9191cf6fdf3ae974d1c
+ARG REDIS_VERSION=3.2.0
+ARG REDIS_DOWNLOAD_SHA1=0c1820931094369c8cc19fc1be62f598bc5961ca
 
 # for redis-sentinel see: http://redis.io/topics/sentinel
 RUN set -x \
@@ -15,7 +14,7 @@ RUN set -x \
 		linux-headers \
 		make \
 		musl-dev \
-	&& wget "$REDIS_DOWNLOAD_URL" -O redis.tar.gz \
+	&& wget http://download.redis.io/releases/redis-${REDIS_VERSION}.tar.gz -O redis.tar.gz \
 	&& echo "$REDIS_DOWNLOAD_SHA1 *redis.tar.gz" | sha1sum -c - \
 	&& mkdir -p /usr/src \
 	&& tar -xzf redis.tar.gz -C /usr/src \
